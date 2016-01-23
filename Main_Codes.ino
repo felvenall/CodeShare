@@ -1,5 +1,5 @@
 #include<Servo.h>
-
+// jonathan made manYY changes
 /////////////intiation variables for SERVO control////////////
 #define servoUpDownPin1 9
 #define servoUpDownPin2 10
@@ -30,7 +30,7 @@ int wheelDir; //1 for forward, 0 for backward
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  
+
   ///////first readings for edge/////////
   while ( readIndex < numReadings){
   readings[readIndex] = analogRead(readIndex);
@@ -50,24 +50,24 @@ void loop() {
 
   //Get angle of table, reference to sensor 1
   angleTable=readAngle();
-  
+
   //Get angle of puck, reference to sensor 1 (VIKTOR'S CODE)
   //anglePuck=;
-  
+
   //get bouncing angle
   angleBounce=bounceAngle();
 
   //function to correct angle and wheel direction for wheel angle limitation, amend according to angle limitation
-  wheel(); 
+  wheel();
   myservoAngle.write(angleBounce);
-  
+
   //function to run motor with dirction given by wheelDir (JON'S CODES)
-  
+
   //Drop down wheel
   servoDown();
 }
 
-/////////////IMPT TO IMPROVE: code to read the sensors repeatedly and return angle//////////// 
+/////////////IMPT TO IMPROVE: code to read the sensors repeatedly and return angle////////////
 int readAngle(){
   delay(100);
     while ( readIndex < numReadings){
@@ -123,10 +123,10 @@ void serialprint(){
 int angle_change(){
    for (int j=0;j<numReadings;j=j+1){
     if (edgeTrack[j]==1){
-      
+
       if (j==numReadings-1){
         if (edgeTrack[0]==1 && edgeTrack[1]==0){
-          return angleTrack[j]+18;          
+          return angleTrack[j]+18;
         }
         if(edgeTrack[0]==1 && edgeTrack[1]==1){
             return angleTrack[0];
@@ -135,10 +135,10 @@ int angle_change(){
               return angleTrack[j];
               }
               }
-              
+
       if (j==numReadings-2){
         if (edgeTrack[j+1]==1 && edgeTrack[0]==0){
-          return angleTrack[j]+18;          
+          return angleTrack[j]+18;
         }
         if(edgeTrack[j+1]==1 && edgeTrack[0]==1){
             return angleTrack[j+1];
@@ -147,7 +147,7 @@ int angle_change(){
               return angleTrack[j];
               }
               }
-      
+
       else{
         if (edgeTrack[j+1]==1 && edgeTrack[j+2]==0){
           return angleTrack[j]+18;
@@ -166,7 +166,7 @@ int angle_change(){
 void wheel(){
   //wheel can go limited angle from between sensor 2 to 8 (angle 72 to 288)
   if (angleBounce>280){
-   angleBounce= angleBounce-180; 
+   angleBounce= angleBounce-180;
    wheelDir=0;
   }
   if (angleBounce<72){
