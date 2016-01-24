@@ -1,4 +1,3 @@
-#include<Servo.h>
 
 /////----- Written by: 4A06 SprungKraft Group Eng Phys McMaster
 /////----- This is the main structure for the code of SprungKraft
@@ -6,6 +5,8 @@
 //---IMPT------ Standardised Reference Point-----IMPT---//
 //Sensors   - 0   1   2   3   4   5   6   7   8   9 CLOCKWISE NUMBERING
 //Angle     - 0   36  72  108 144 180 216 252 288 324
+
+#include<Servo.h>
 
 /////////////intiation variables for SERVO control////////////
 #define servoUpDownPin1 9
@@ -17,7 +18,7 @@ Servo myservoUpDown1;
 Servo myservoUpDown2;
 
 ////////////intiation variables for EDGE DETECTION TO WHEEL ANGLE///////////////////
-const int numReadings = 3;
+const int numReadings = 3; //---> change to number of sensors you want to read out of 10
 int readings[numReadings];
 int readIndex = 0;
 int readings2[numReadings];
