@@ -36,7 +36,8 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
-  ///////first readings for edge/////////
+  ///////--- To retrieve first set of readings for edge ---/////////
+  //////--- CAN DO TESTING HERE----/////// ********* To add code for sensor testing
   while ( readIndex < numReadings){
   readings[readIndex] = analogRead(readIndex);
   readIndex = readIndex+1;
@@ -72,7 +73,15 @@ void loop() {
   servoDown();
 }
 
-/////////////IMPT TO IMPROVE: code to read the sensors repeatedly and return angle////////////
+/////////////**** Will need to amend and improve: code to read the sensors repeatedly and return angle////////////
+////////////---- This is the code to read and analyse the difference between current and previous reading 
+///////////----- (TIMING is very important for this)
+//////////------ This codes compare the current and previous edge sensor readings and whenever there is a difference of
+/////////------- more than a 100, it will set a value in the edgeTrack array, to say which sensor is high. Such as
+/////////------- when sensor 4 has a 100 difference, it will set the edgeTrack index 4 to 1.
+////////-------- Following this, whenever there is a sensor that is set to 1 in edgeTrack, it will also check if
+////////-------- the current reading for the sensor is above 600 (which indicate that the sensor is very close to the edge).
+///////--------- If it is, it will run the function: angle_change().
 int readAngle(){
   delay(100);
     while ( readIndex < numReadings){
