@@ -19,20 +19,17 @@ Servo myservoUpDown2;
 
 ////////////intiation variables for EDGE DETECTION TO WHEEL ANGLE///////////////////
 const int numReadings = 3; //---> change to number of sensors you want to read out of 10
-int readings[numReadings];
-int readIndex = 0;
-int readings2[numReadings];
-int inputPin=0;
-int diffReadings[numReadings];
-int edgeTrack[numReadings]={0};
-//Sensors   - 0   1   2   3   4   5   6   7   8   9 CLOCKWISE NUMBERING
-//Angle     - 0   36  72  108 144 180 216 252 288 324
-int angleTrack[10]={0,36,72,108,144,180,216,252,288,324};
-int angleTable;
-int anglePuck;
-int angleBounce;
-int wheelAngle;
-int wheelDir; //1 for forward, 0 for backward
+int readings[numReadings];  //---> Array to keep track of sensors previous analogue readings
+int readings2[numReadings]; //---> Array to keep track of sensors analogue readings
+int readIndex = 0; //----> Variable used for indexing
+int diffReadings[numReadings]; //----> Array used to keep track of differences between current an previous readings
+int edgeTrack[numReadings]={0}; //----> Array to keep track of which sensors is indicated to be close to edge
+int angleTrack[10]={0,36,72,108,144,180,216,252,288,324}; //---> Array to retrieving sensor's angle data
+int angleTable; //-----> Variable for angle of table relative to reference sensor 0
+int anglePuck; //-----> Variable for angle of movement of puck relative to reference sensor 0
+int angleBounce; //-----> Variable for angle that the puck should move in
+int wheelAngle; //-----> Variable for angle that wheel should change to
+int wheelDir; //---> Variable for whether wheels hould move forward or reverse: 1 for forward, 0 for backward
 //////////////////////////////////////
 
 void setup() {
@@ -146,24 +143,30 @@ int angle_change(){
 
       if (j==numReadings-2){
         if (edgeTrack[j+1]==1 && edgeTrack[0]==0){
+          edgeTrack[numReadings]={0};
           return angleTrack[j]+18;
         }
         if(edgeTrack[j+1]==1 && edgeTrack[0]==1){
+            edgeTrack[numReadings]={0};          
             return angleTrack[j+1];
             }
             else{
+              edgeTrack[numReadings]={0};
               return angleTrack[j];
               }
               }
 
       else{
         if (edgeTrack[j+1]==1 && edgeTrack[j+2]==0){
+          edgeTrack[numReadings]={0}
           return angleTrack[j]+18;
           }
           if(edgeTrack[j+1]==1 && edgeTrack[j+2]==1){
+            edgeTrack[numReadings]={0}            
             return angleTrack[j+1];
             }
             else{
+              edgeTrack[numReadings]={0};
               return angleTrack[j];
               }
               }
