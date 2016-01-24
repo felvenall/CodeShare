@@ -1,5 +1,12 @@
 #include<Servo.h>
-// jonathan made manYY changes
+
+/////----- Written by: 4A06 SprungKraft Group Eng Phys McMaster
+/////----- This is the main structure for the code of SprungKraft
+
+//---IMPT------ Standardised Reference Point-----IMPT---//
+//Sensors   - 0   1   2   3   4   5   6   7   8   9 CLOCKWISE NUMBERING
+//Angle     - 0   36  72  108 144 180 216 252 288 324
+
 /////////////intiation variables for SERVO control////////////
 #define servoUpDownPin1 9
 #define servoUpDownPin2 10
