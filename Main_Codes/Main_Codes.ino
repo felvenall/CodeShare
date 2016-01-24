@@ -113,7 +113,7 @@ int angle_change(){
    for (int j=0;j<numReadings;j=j+1){ // goes through edgeTrack and see if any is high
     if (edgeTrack[j]==1){
 /// if any is high, check the next three sensors readings, except for the second last and last index
-/// if the first and second index is high, need to check for sensors 8 and 9
+/// if the first index is high, need to check for sensors 8 and 9
       if (j==0){ // Sensor 0 is high
         if (edgeTrack[numReadings-1]==1){
           if (edgeTrack[1]==1){ // sensor 9,0,1
