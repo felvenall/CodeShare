@@ -19,7 +19,7 @@ Servo myservoUpDown2;
 
 ////////////intiation variables for EDGE DETECTION TO WHEEL ANGLE///////////////////
 const int numReadings = 10; //---> change to number of sensors you want to read out of 10
-int readings[numReadings];  //---> Array to keep track of sensors previous analogue readings
+int readings[numReadings];  //---> Array to keep track of sensors first analogue readings
 int readings2[numReadings]; //---> Array to keep track of sensors analogue readings
 int readIndex = 0; //----> Variable used for indexing
 int diffReadings[numReadings]; //----> Array used to keep track of differences between current an previous readings
@@ -83,7 +83,7 @@ void loop() {
 ////////-------- the current reading for the sensor is above 600 (which indicate that the sensor is very close to the edge).
 ///////--------- If it is, it will run the function: angle_change().
 int readAngle(){
-  delay(100);
+  //delay(100);
     while ( readIndex < numReadings){
     readings2[readIndex] = analogRead(readIndex);
     readIndex = readIndex+1;
