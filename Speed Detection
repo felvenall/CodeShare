@@ -1,4 +1,5 @@
-// Credit to Mr. John K from which this code was built off of
+// Code taken from Mr. John K and modified/amended by Viktor Kapetanovic for 4A06 Capstone 
+
 #include <SPI.h>
 #include <avr/pgmspace.h>
 #include <math.h>
@@ -13,6 +14,7 @@
 #define REG_Configuration_II                     0x10
 #define REG_SROM_Enable                          0x13
 #define REG_LASER_CTRL0                          0x20
+#define REG_Lift_Detection_Thr                   0x2e
 #define REG_Configuration_V                      0x2f
 #define REG_Configuration_IV                     0x39
 #define REG_Power_Up_Reset                       0x3a
@@ -30,12 +32,10 @@ int16_t *y = (int16_t *) &xydat[2];
 
 // ----------------------------------------------------
 int ncs = 10;
-//int led = 8;
 void setup() { 
   Serial.begin(9600);  // set bit rate
   
   pinMode(ncs, OUTPUT);  // serial port enable
-  //pinMode(led, OUTPUT);
   
   SPI.begin();  // begin communication
   
@@ -47,9 +47,6 @@ void setup() {
   SPI.setClockDivider(8); // SPI clock 1/8 of system frequency 
   
   performStartup();  
-  /*digitalWrite(led, HIGH);
-  delay(3000);
-  digitalWrite(led, LOW);*/
 }
 
 // ---------------------------------------------------  
@@ -80,7 +77,7 @@ void loop() {
       phi = phi;
     }
       
-   Serial.println("Angle = " + String(phi) + " degrees, " + "Speed = " + String(speeed) + " ADNI");
+   Serial.println("Angle, " + String(phi) + ", Speed, " + String(speeed) + ", X, " + String(*x) + ", Y, " + ", " + String(*y));
     
     xprev = *x;
     yprev = *y;
@@ -141,6 +138,37 @@ void adns_write_reg(byte reg_addr, byte data){
 }
 
 // ----------------------------------------------------
+// initialization
+void performStartup(void){
+  adns_com_end(); // ensure that the serial port is reset
+  adns_com_begin(); // ensure that the serial port is reset
+  adns_com_end(); // ensure that the serial port is reset
+  adns_write_reg(REG_Power_Up_Reset, 0x5a); // force reset
+  delay(50); // wait for it to reboot
+  // read registers 0x02 to 0x06 (and discard the data)
+  adns_read_reg(REG_Motion);
+  adns_read_reg(REG_Delta_X_L);
+  adns_read_reg(REG_Delta_X_H);
+  adns_read_reg(REG_Delta_Y_L);
+  adns_read_reg(REG_Delta_Y_H);
+  // upload the firmware
+  adns_upload_firmware();
+  delay(10);
+  adns_write_reg(REG_Configuration_I, 0x44); // 3400 cpi
+  delay(10);
+  adns_write_reg(REG_Lift_Detection_Thr, 0x18);
+  //enable laser(bit 0 = 0b), in normal mode (bits 3,2,1 = 000b)
+  // reading the actual value of the register is important because the real
+  // default value is different from what is said in the datasheet, and if you
+  // change the reserved bytes (like by writing 0x00...) it would not work.
+  byte laser_ctrl0 = adns_read_reg(REG_LASER_CTRL0);
+  adns_write_reg(REG_LASER_CTRL0, laser_ctrl0 & 0xf0 );
+  
+  delay(1);
+  Serial.println("Optical Chip Initialized");
+  }
+
+// ----------------------------------------------------
 // upload firmware
 void adns_upload_firmware(){
   // send the firmware to the chip, cf p.18 of the datasheet
@@ -172,33 +200,3 @@ void adns_upload_firmware(){
   adns_com_end();
   }
 
-// ----------------------------------------------------
-// initialization
-void performStartup(void){
-  adns_com_end(); // ensure that the serial port is reset
-  adns_com_begin(); // ensure that the serial port is reset
-  adns_com_end(); // ensure that the serial port is reset
-  adns_write_reg(REG_Power_Up_Reset, 0x5a); // force reset
-  delay(50); // wait for it to reboot
-  // read registers 0x02 to 0x06 (and discard the data)
-  adns_read_reg(REG_Motion);
-  adns_read_reg(REG_Delta_X_L);
-  adns_read_reg(REG_Delta_X_H);
-  adns_read_reg(REG_Delta_Y_L);
-  adns_read_reg(REG_Delta_Y_H);
-  // upload the firmware
-  adns_upload_firmware();
-  delay(10);
-  adns_write_reg(REG_Configuration_I, 0x44); // 3400 cpi
-  delay(10);
-  adns_write_reg(REG_Lift_Detection_Thr, 0x18);
-  //enable laser(bit 0 = 0b), in normal mode (bits 3,2,1 = 000b)
-  // reading the actual value of the register is important because the real
-  // default value is different from what is said in the datasheet, and if you
-  // change the reserved bytes (like by writing 0x00...) it would not work.
-  byte laser_ctrl0 = adns_read_reg(REG_LASER_CTRL0);
-  adns_write_reg(REG_LASER_CTRL0, laser_ctrl0 & 0xf0 );
-  
-  delay(1);
-  Serial.println("Optical Chip Initialized");
-  }
