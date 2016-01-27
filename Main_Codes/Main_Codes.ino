@@ -18,10 +18,9 @@ Servo myservoUpDown1;
 Servo myservoUpDown2;
 
 ////////////intiation variables for EDGE DETECTION TO WHEEL ANGLE///////////////////
-const int numReadings = 10; //---> change to number of sensors you want to read out of 10
+const int numReadings = 5; //---> change to number of sensors you want to read out of 10
 int readings[numReadings];  //---> Array to keep track of sensors first analogue readings
 int readings2[numReadings]; //---> Array to keep track of sensors analogue readings
-int readIndex = 0; //----> Variable used for indexing
 int diffReadings[numReadings]; //----> Array used to keep track of differences between current an previous readings
 int edgeTrack[numReadings]={0}; //----> Array to keep track of which sensors is indicated to be close to edge
 int angleTrack[10]={0,36,72,108,144,180,216,252,288,324}; //---> Array to retrieving sensor's angle data
@@ -34,15 +33,12 @@ int wheelDir; //---> Variable for whether wheels hould move forward or reverse: 
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
-
+  Serial.begin(9600); 
   ///////--- To retrieve first set of readings for edge ---/////////
   //////--- CAN DO TESTING HERE----/////// ********* To add code for sensor testing
-  while ( readIndex < numReadings){
-  readings[readIndex] = analogRead(readIndex);
-  readIndex = readIndex+1;
+  for (int i=0;i<numReadings;i=i+1){
+  readings[i] = analogRead(i);
   }
-  readIndex=0;
 
   //////servos pins setup////////
   myservoAngle.attach(servoRotationPin);
@@ -55,22 +51,47 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   //Get angle of table, reference to sensor 1
-  angleTable=readAngle();
+  //angleTable=readAngle();
+  for (int i=0;i<numReadings;i=i+1){
+    readings2[i] = analogRead(i);
+  }
+  for (int i=0;i<numReadings;i=i+1){
+    diffReadings[i]=readings2[i]-readings[i];
+    //Serial.println(diffReadings[i]);
+    if (diffReadings[i]>200){ //double check, if the puck is really really moving slowly to the edge, maybe no changes will be >100
+      edgeTrack[i]=1;
+    }
+    if (edgeTrack[i]==1){
+      if (readings2[i]>400){
+        angleTable=angle_change();
+        for (int k=0;k<numReadings;k=k+1){
+          edgeTrack[k]=0;} 
+          //Serial.println(angleTable);
+          //---------continue as edge is close-------------//
+          //Get angle of puck, reference to sensor 1 (VIKTOR'S CODE)
+          anglePuck=25;
+          Serial.print(angleTable);
+          Serial.print(',');
+          //get bouncing angle
+          angleBounce=bounceAngle();
+          Serial.println(angleBounce);
+          delay(1000);
+          
+          //function to correct angle and wheel direction for wheel angle limitation, amend according to angle limitation
+          //wheel();
+          //myservoAngle.write(angleBounce);
+          
+          //function to run motor with dirction given by wheelDir (JON'S CODES)
+          
+          //Drop down wheel
+          //servoDown();
+          
+    }
+    }
+  }
 
-  //Get angle of puck, reference to sensor 1 (VIKTOR'S CODE)
-  //anglePuck=;
 
-  //get bouncing angle
-  angleBounce=bounceAngle();
 
-  //function to correct angle and wheel direction for wheel angle limitation, amend according to angle limitation
-  wheel();
-  myservoAngle.write(angleBounce);
-
-  //function to run motor with dirction given by wheelDir (JON'S CODES)
-
-  //Drop down wheel
-  servoDown();
 }
 
 /////////////**** Will need to amend and improve: code to read the sensors repeatedly and return angle////////////
@@ -82,25 +103,27 @@ void loop() {
 ////////-------- Following this, whenever there is a sensor that is set to 1 in edgeTrack, it will also check if
 ////////-------- the current reading for the sensor is above 600 (which indicate that the sensor is very close to the edge).
 ///////--------- If it is, it will run the function: angle_change().
-int readAngle(){
-  //delay(100);
-    while ( readIndex < numReadings){
-    readings2[readIndex] = analogRead(readIndex);
-    readIndex = readIndex+1;
-  }
-  readIndex=0;
-  for (int i=0;i<numReadings;i=i+1){
-    diffReadings[i]=readings2[i]-readings[i];
-    if (diffReadings[i]>100){ //double check, if the puck is really really moving slowly to the edge, maybe no changes will be >100
-      edgeTrack[i]=1;
-    }
-    if (edgeTrack[i]==1){
-      if (readings2[i]>600){
-        return angle_change();
-    }
-    }
-  }
-}
+//int readAngle(){
+//  //delay(100);
+//  for (int i=0;i<numReadings;i=i+1){
+//    readings2[i] = analogRead(i);
+//  }
+//  for (int i=0;i<numReadings;i=i+1){
+//    diffReadings[i]=readings2[i]-readings[i];
+//    //Serial.println(diffReadings[i]);
+//    if (diffReadings[i]>200){ //double check, if the puck is really really moving slowly to the edge, maybe no changes will be >100
+//      edgeTrack[i]=1;
+//    }
+//    if (edgeTrack[i]==1){
+//      if (readings2[i]>600){
+//        angleTable=angle_change();
+//        for (int k=0;k<numReadings;k=k+1){
+//          edgeTrack[k]=0;} 
+//          //Serial.println(angleTable);
+//    }
+//    }
+//  }
+//}
 
 ///----- This is the function to return angle of table with reference to sensor 0.
 ///----- Based on testing, when there two sensors that have differences of 100 before any sensor hits 600 in reading,
@@ -117,57 +140,46 @@ int angle_change(){
       if (j==0){ // Sensor 0 is high
         if (edgeTrack[numReadings-1]==1){
           if (edgeTrack[1]==1){ // sensor 9,0,1
-            edgeTrack[numReadings]={0}; 
             return angleTrack[j];             
           }
           if (edgeTrack[numReadings-2]==1){// sensor 8,9,0
-            edgeTrack[numReadings]={0}; 
             return angleTrack[numReadings-1];                
           }
-          else{
-            edgeTrack[numReadings]={0};// between sensor 0 and 9
+          else{// between sensor 0 and 9
             return 360-18;
           }
         }
         else{
           if (edgeTrack[1]==1 && edgeTrack[2]==1){//Sensor 0,1,2
-            edgeTrack[numReadings]={0}; 
             return angleTrack[1];                          
           }
            if (edgeTrack[1]==1 && edgeTrack[2]==0){//Sensor 0,1
-            edgeTrack[numReadings]={0}; 
             return angleTrack[0]+18;                          
           }         
         }
       }
         
-      if (j==numReadings-1){//this is so that it does not read beyond index
-        edgeTrack[numReadings]={0}; //sensor 9 
+      if (j==numReadings-1){//this is so that it does not read beyond index //sensor 9 
         return angleTrack[j];
         }
 
       if (j==numReadings-2){ 
         if (edgeTrack[j+1]==1){ //sensor 8,9
-          edgeTrack[numReadings]={0};
           return angleTrack[j]+18;
         }
-        else{
-          edgeTrack[numReadings]={0}; //sensor 8
+        else{//sensor 8
           return angleTrack[j];
           }
           }
 
       else{
         if (edgeTrack[j+1]==1 && edgeTrack[j+2]==0){
-          edgeTrack[numReadings]={0};
           return angleTrack[j]+18;
           }
-          if(edgeTrack[j+1]==1 && edgeTrack[j+2]==1){
-            edgeTrack[numReadings]={0};            
+          if(edgeTrack[j+1]==1 && edgeTrack[j+2]==1){        
             return angleTrack[j+1];
             }
             else{
-              edgeTrack[numReadings]={0};
               return angleTrack[j];
               }
               }
@@ -186,7 +198,7 @@ int bounceAngle(){
     bounce= angleTable+180-(anglePuck-angleTable);
   }
   if (bounce<0){
-    bounce=360-bounce;
+    bounce=360+bounce;
   }
   if (bounce>=360){
     bounce=bounce-360;
