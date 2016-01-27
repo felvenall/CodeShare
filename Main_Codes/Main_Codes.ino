@@ -18,8 +18,8 @@ Servo myservoUpDown1;
 Servo myservoUpDown2;
 
 ////////////intiation variables for EDGE DETECTION TO WHEEL ANGLE///////////////////
-const int numReadings = 3; //---> change to number of sensors you want to read out of 10
-int readings[numReadings];  //---> Array to keep track of sensors previous analogue readings
+const int numReadings = 10; //---> change to number of sensors you want to read out of 10
+int readings[numReadings];  //---> Array to keep track of sensors first analogue readings
 int readings2[numReadings]; //---> Array to keep track of sensors analogue readings
 int readIndex = 0; //----> Variable used for indexing
 int diffReadings[numReadings]; //----> Array used to keep track of differences between current an previous readings
@@ -45,9 +45,9 @@ void setup() {
   readIndex=0;
 
   //////servos pins setup////////
-  myservoAngle.servoRotationPin;
-  myservoUpDown1.servoUpDownPin1;
-  myservoUpDown2.servoUpDownPin2;
+  myservoAngle.attach(servoRotationPin);
+  myservoUpDown1.attach(servoUpDownPin1);
+  myservoUpDown2.attach(servoUpDownPin2);
   //Serial.write("Setup Done");
 }
 
@@ -83,7 +83,7 @@ void loop() {
 ////////-------- the current reading for the sensor is above 600 (which indicate that the sensor is very close to the edge).
 ///////--------- If it is, it will run the function: angle_change().
 int readAngle(){
-  delay(100);
+  //delay(100);
     while ( readIndex < numReadings){
     readings2[readIndex] = analogRead(readIndex);
     readIndex = readIndex+1;
@@ -101,6 +101,80 @@ int readAngle(){
     }
   }
 }
+
+///----- This is the function to return angle of table with reference to sensor 0.
+///----- Based on testing, when there two sensors that have differences of 100 before any sensor hits 600 in reading,
+///----- the angle will be approximately halfway between that two sensors.
+///----- If only one sensor has difference of 100 before any hits 600 in reading, the angle will be approximately 
+///----- be that  of the sensor.
+///----- If three sensors have difference of 100 before any hits 600 in reading, the angle will be approximately 
+///----- that of the sensor in the middle.
+int angle_change(){
+   for (int j=0;j<numReadings;j=j+1){ // goes through edgeTrack and see if any is high
+    if (edgeTrack[j]==1){
+/// if any is high, check the next three sensors readings, except for the second last and last index
+/// if the first index is high, need to check for sensors 8 and 9
+      if (j==0){ // Sensor 0 is high
+        if (edgeTrack[numReadings-1]==1){
+          if (edgeTrack[1]==1){ // sensor 9,0,1
+            edgeTrack[numReadings]={0}; 
+            return angleTrack[j];             
+          }
+          if (edgeTrack[numReadings-2]==1){// sensor 8,9,0
+            edgeTrack[numReadings]={0}; 
+            return angleTrack[numReadings-1];                
+          }
+          else{
+            edgeTrack[numReadings]={0};// between sensor 0 and 9
+            return 360-18;
+          }
+        }
+        else{
+          if (edgeTrack[1]==1 && edgeTrack[2]==1){//Sensor 0,1,2
+            edgeTrack[numReadings]={0}; 
+            return angleTrack[1];                          
+          }
+           if (edgeTrack[1]==1 && edgeTrack[2]==0){//Sensor 0,1
+            edgeTrack[numReadings]={0}; 
+            return angleTrack[0]+18;                          
+          }         
+        }
+      }
+        
+      if (j==numReadings-1){//this is so that it does not read beyond index
+        edgeTrack[numReadings]={0}; //sensor 9 
+        return angleTrack[j];
+        }
+
+      if (j==numReadings-2){ 
+        if (edgeTrack[j+1]==1){ //sensor 8,9
+          edgeTrack[numReadings]={0};
+          return angleTrack[j]+18;
+        }
+        else{
+          edgeTrack[numReadings]={0}; //sensor 8
+          return angleTrack[j];
+          }
+          }
+
+      else{
+        if (edgeTrack[j+1]==1 && edgeTrack[j+2]==0){
+          edgeTrack[numReadings]={0};
+          return angleTrack[j]+18;
+          }
+          if(edgeTrack[j+1]==1 && edgeTrack[j+2]==1){
+            edgeTrack[numReadings]={0};            
+            return angleTrack[j+1];
+            }
+            else{
+              edgeTrack[numReadings]={0};
+              return angleTrack[j];
+              }
+              }
+    }
+   }
+}
+
 
 //code to calculate the bounce angle indicating movement direction and table edge
 int bounceAngle(){
@@ -133,55 +207,6 @@ void serialprint(){
     delay(100);
 }
 
-//function to return angle of table
-int angle_change(){
-   for (int j=0;j<numReadings;j=j+1){
-    if (edgeTrack[j]==1){
-
-      if (j==numReadings-1){
-        if (edgeTrack[0]==1 && edgeTrack[1]==0){
-          return angleTrack[j]+18;
-        }
-        if(edgeTrack[0]==1 && edgeTrack[1]==1){
-            return angleTrack[0];
-            }
-            else{
-              return angleTrack[j];
-              }
-              }
-
-      if (j==numReadings-2){
-        if (edgeTrack[j+1]==1 && edgeTrack[0]==0){
-          edgeTrack[numReadings]={0};
-          return angleTrack[j]+18;
-        }
-        if(edgeTrack[j+1]==1 && edgeTrack[0]==1){
-            edgeTrack[numReadings]={0};          
-            return angleTrack[j+1];
-            }
-            else{
-              edgeTrack[numReadings]={0};
-              return angleTrack[j];
-              }
-              }
-
-      else{
-        if (edgeTrack[j+1]==1 && edgeTrack[j+2]==0){
-          edgeTrack[numReadings]={0}
-          return angleTrack[j]+18;
-          }
-          if(edgeTrack[j+1]==1 && edgeTrack[j+2]==1){
-            edgeTrack[numReadings]={0}            
-            return angleTrack[j+1];
-            }
-            else{
-              edgeTrack[numReadings]={0};
-              return angleTrack[j];
-              }
-              }
-    }
-   }
-}
 
 void wheel(){
   //wheel can go limited angle from between sensor 2 to 8 (angle 72 to 288)
