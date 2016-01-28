@@ -27,11 +27,12 @@ void loop(){
       inString += (char)inChar;
     }
     // if you get a newline, print the string,
+    
     // then the string's value:
     if (inChar == '\n') {
       Serial.print(inString);
-      myservo.write(inString.toInt());
-      myservo2.write(inString.toInt());
+      myservo.writeMicroseconds(inString.toInt());
+      myservo2.writeMicroseconds(inString.toInt());
       Serial.flush();
       // clear the string for new input:
       inString = "";
