@@ -79,7 +79,7 @@ void loop() {
           
           //function to correct angle and wheel direction for wheel angle limitation, amend according to angle limitation
           //wheel();
-          //myservoAngle.write(angleBounce);
+          //myservoAngle.writeMicroseconds(angleBounce);
           
           //function to run motor with dirction given by wheelDir (JON'S CODES)
           
@@ -89,9 +89,6 @@ void loop() {
     }
     }
   }
-
-
-
 }
 
 /////////////**** Will need to amend and improve: code to read the sensors repeatedly and return angle////////////
@@ -236,8 +233,8 @@ void wheel(){
 }
 
 void servoUP(){
-  myservoUpDown1.write(100);
-  myservoUpDown2.write(100);
+  myservoUpDown1.write(90);
+  myservoUpDown2.write(90);
 }
 
 void servoDown(){
