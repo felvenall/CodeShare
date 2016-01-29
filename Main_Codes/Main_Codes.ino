@@ -11,14 +11,23 @@
 #include <avr/pgmspace.h>
 #include <math.h>
 
+/////////////intiation variables for SERVO control////////////
+#define servoUpDownPin1 5
+#define servoUpDownPin2 6
+#define servoRotationPin 7
 Servo myservoAngle;
 Servo myservoUpDown1;
 Servo myservoUpDown2;
 
-/////////////intiation variables for SERVO control////////////
-#define servoUpDownPin1 9
-#define servoUpDownPin2 10
-#define servoRotationPin 8
+////////////intiation variables for ESC control///////////
+#define controlPin 0
+#define pwm 9
+#define statePos 11
+#define green 0
+#define red 1
+#define neutral 2
+Servo driveMotor; // create motor object
+volatile int setVal; // analog read value
 
 // Define all ADNS registers
 #define REG_Motion                               0x02
@@ -96,9 +105,18 @@ void setup() {
   //Serial.write("Setup Done");
 }
 
+//The 2nd loop in the main loop is the code to read and analyse the difference between current and previous reading 
+// This codes compare the current and previous edge sensor readings and whenever there is a difference of
+// more than a 100, it will set a value in the edgeTrack array, to say which sensor is high. Such as
+// when sensor 4 has a 100 difference, it will set the edgeTrack index 4 to 1.
+// Following this, whenever there is a sensor that is set to 1 in edgeTrack, it will also check if
+// the current reading for the sensor is above 600 (which indicate that the sensor is very close to the edge).
+// If it is, it will run the function: angle_change().
+
 void loop() {
   //Get angle of table, reference to sensor 1
   //angleTable=readAngle();
+  servoUp();
   for (int i=0;i<numReadings;i=i+1){
     readings2[i] = analogRead(i);
   }
@@ -115,39 +133,31 @@ void loop() {
           edgeTrack[k]=0;} 
           //Serial.println(angleTable);
           //---------continue as edge is close-------------//
+          
           //Get angle of puck, reference to sensor 1 (VIKTOR'S CODE)
           anglePuck=ADNS_main();
-          Serial.print(angleTable);
-          Serial.print(',');
+          
+          //Serial.print(angleTable);
+          //Serial.print(',');
           //get bouncing angle
+          
           angleBounce=bounceAngle();
-          Serial.println(angleBounce);
-          delay(1000);
-          
           //function to correct angle and wheel direction for wheel angle limitation, amend according to angle limitation
-          //wheel();
-          //myservoAngle.writeMicroseconds(angleBounce);
+          wheel();
+          servoRotation();// rotate top servo for wheel angle
           
-          //function to run motor with dirction given by wheelDir (JON'S CODES)
-          
+          //function to run motor with direction given by wheelDir (JON'S CODES)
+          setVal= motorCal();
+          driveMotor.write(setVal);  // send speed command to ESC  
+
           //Drop down wheel
-          //servoDown();
+          servoDown();
           
     }
     }
   }
+  delay(1000);
 }
-
-//The 2nd loop in the main loop is the code to read and analyse the difference between current and previous reading 
-//(TIMING is very important for this)
-// This codes compare the current and previous edge sensor readings and whenever there is a difference of
-// more than a 100, it will set a value in the edgeTrack array, to say which sensor is high. Such as
-// when sensor 4 has a 100 difference, it will set the edgeTrack index 4 to 1.
-// Following this, whenever there is a sensor that is set to 1 in edgeTrack, it will also check if
-// the current reading for the sensor is above 600 (which indicate that the sensor is very close to the edge).
-// If it is, it will run the function: angle_change().
-
-
 
 ///----- This is the function to return angle of table with reference to sensor 0.
 ///----- Based on testing, when there two sensors that have differences of 100 before any sensor hits 600 in reading,
@@ -229,20 +239,6 @@ int bounceAngle(){
   return bounce;
 }
 
-
-void serialprint(){
-    for (int i=0;i<numReadings;i=i+1){
-    Serial.print(readings2[i]);//-readings[i]);
-    readings[i]=readings2[i];
-    if (i<(numReadings-1)){
-      Serial.print(',');
-    }
-    }
-    Serial.println('.');
-    delay(100);
-}
-
-
 void wheel(){
   //wheel can go limited angle from between sensor 2 to 8 (angle 72 to 288)
   if (angleBounce>280){
@@ -258,7 +254,7 @@ void wheel(){
   }
 }
 
-void servoUP(){
+void servoUp(){
   myservoUpDown1.writeMicroseconds(900);
   myservoUpDown2.writeMicroseconds(900);
 }
@@ -268,11 +264,34 @@ void servoDown(){
   myservoUpDown2.writeMicroseconds(600);
 }
 
+void servoRotation(){
+  int startAngle=162; //Correspond to 2400us update according to calibration Max
+  int endAngle=360; //Correspond to 600us
+  int caliAngle=(((angleBounce-endAngle)/(startAngle-endAngle))*(2400-600))+600;
+  myservoAngle.writeMicroseconds(caliAngle);
+}
+
+//------- function to determine motor speed input-----//
+int motorCal(){
+  //GET SPEED FROM mouse sensor//
+  //Calibrate speed
+  if (wheelDir==1){
+   //0-90 or 90 to 180, according to motor calibration 
+   
+  }
+  else{
+    //0-90 or 90-180, according to motor calibration
+    
+  }
+}
+
+
 // ---------------------------------------------------  
 // main ADNS loop
 float xprev = 0;
 float yprev = 0;
-void ADNS_main() {
+
+float ADNS_main() {
     float t_start = micros();
     UpdatePointer();
     float t_final = micros();
@@ -300,9 +319,8 @@ void ADNS_main() {
     
     xprev = *x;
     yprev = *y;
-    delay(300);  // delay between readings
     
-    return phi
+    return phi;
  }
 
 // ----------------------------------------------------
